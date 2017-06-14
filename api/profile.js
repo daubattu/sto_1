@@ -9,29 +9,28 @@ var _ = require('lodash');
 let router = express.Router();
 
 router.get('/', authenticate, (req, res) => {
-  User.find({username: req.decoded.username}, (err, user) => {
-    let userCurrent = Object.assign({}, user);
+  User.findOne({username: req.decoded.username}, (err, user) => {
     if(err) res.json({err});
     else {
       if(isEmpty(user)) res.json({errors: 'Profile not found!!!'});
       else {
-        Profile.find({username: req.decoded.username}, (err, profile) => {
+        Profile.findOne({username: req.decoded.username}, (err, profile) => {
           if(err) res.jon({err});
           else {
-            if(_.isEqual(profile, [])) {
+            if(_.isEqual(profile, {})) {
 
               let profileUser = new Profile();
 
-              profileUser.username = user[0].username;
-              profileUser.birthday = user[0].birthday;
-              profileUser.gender = user[0].gender;
+              profileUser.username = user.username;
+              profileUser.birthday = user.birthday;
+              profileUser.gender = user.gender;
 
               profileUser.save((err, profileSave) => {
                 if(err) res.json({errors: 'Save profile failed!!!'});
-                else res.json({profileSave, message: 'Save profile ok!!!'})
+                else res.json(profileSave)
               })
             } else {
-              res.json({message: 'Get not create', profile});
+              res.json(profile);
             }
           }
         })

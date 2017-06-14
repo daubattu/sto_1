@@ -69,7 +69,6 @@ module.exports = (app) => {
               username: user.get('username')
             }, 'somejsonwebtoken');
             localStorage.setItem('token', token);
-            res.setHeader('Authorization', token);
             res.json({success: true, token});
           } else {
             res.json({errors: 'Password is not match with username'})
