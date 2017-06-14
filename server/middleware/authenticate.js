@@ -4,7 +4,7 @@ import storage from 'node-persist';
 import localStorage from 'localStorage';
 
 export default(req, res, next) => {
-  const token = localStorage.getItem('token');
+  const token = req.headers['authorization'];
   if(token) {
     jwt.verify(token, 'somejsonwebtoken', function(err, decoded) {
       if (err) {

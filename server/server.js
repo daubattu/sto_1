@@ -3,8 +3,11 @@ var ejs = require('ejs');
 var engine = require('ejs-mate');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
+
 import post from '../routes/post.js';
 import apiUsers from '../api/user.js';
+import profile from '../api/profile.js';
+
 import localStorage from 'localStorage';
 import setTokenAuthorizaton from './middleware/setTokenAuthorizaton';
 
@@ -21,8 +24,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
 require('../routes/user.js')(app);
-app.use('/api', apiUsers);
+app.use('/api/users', apiUsers);
 app.use('/post', post);
+app.use('/api/me', profile);
 
 if(localStorage.getItem('token') !== '') {
   setTokenAuthorizaton(localStorage.getItem('token'));

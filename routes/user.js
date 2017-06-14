@@ -7,7 +7,6 @@ import validateLogin from '../server/validate/validateLogin.js';
 import localStorage from 'localStorage';
 import storage from 'node-persist';
 import authenticate from '../server/middleware/authenticate.js';
-import setTokenAuthorizaton from '../server/middleware/setTokenAuthorizaton.js';
 import axios from 'axios';
 
 module.exports = (app) => {

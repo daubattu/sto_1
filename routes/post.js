@@ -1,6 +1,7 @@
 import express from 'express';
 import Post from '../models/Post';
 import authenticate from '../server/middleware/authenticate.js';
+import isEmpty from 'lodash/isEmpty';
 
 let router = express.Router();
 
@@ -26,8 +27,11 @@ router.get('/', authenticate, (req, res) => {
 
 router.get('/:author', (req, res) => {
   Post.find({author: req.params.author}, (err, posts) => {
-    if(posts === []) res.json({errors: 'Author not found!!!'});
-    else res.json({posts});
+    if(err) res.json({err});
+    else {
+      if(isEmpty(posts)) res.json({errors: 'Author not found!!!'});
+      else res.json({posts});
+    }
   })
 })
 
