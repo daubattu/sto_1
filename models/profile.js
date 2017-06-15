@@ -11,12 +11,10 @@ var profileSchema = mongoose.Schema({
   }, {
     toJSON: {
       transform: function(profile, ret) {
-        delete ret.username;
         delete ret._id;
         delete ret.__v;
       }
     }
-  }
-)
+});
 
 module.exports = mongoose.model('Profile', profileSchema);

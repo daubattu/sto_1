@@ -5,18 +5,12 @@ import bcrypt from 'bcrypt';
 import validateSignup from '../server/validate/validateSignup.js';
 import validateLogin from '../server/validate/validateLogin.js';
 import localStorage from 'localStorage';
-import storage from 'node-persist';
 import authenticate from '../server/middleware/authenticate.js';
 import axios from 'axios';
 
 module.exports = (app) => {
 
   app.get('/', (req, res) => {
-    const token = localStorage.getItem('token');
-    console.log(localStorage.getItem('token'));
-    if(token) {
-      setTokenAuthorizaton(token);
-    }
     res.render('index');
   });
 
@@ -55,38 +49,41 @@ module.exports = (app) => {
   });
 
   app.get('/login', (req, res) => {
-    res.render('user/login');
+    if(req.session.token) res.json({message: "You are logging!!! Do you want logout?"});
+    else res.render('user/login');
   });
 
   app.post('/login', (req, res) => {
-    const { errors, isValid } = validateLogin(req.body);
-    if(isValid) {
-      User.findOne({username: req.body.username}, (err, user) => {
-        if(user) {
-          if(bcrypt.compareSync(req.body.password, user.get('password'))) {
-            let token = jwt.sign({
-              id: user.get('_id'),
-              username: user.get('username')
-            }, 'somejsonwebtoken');
-            localStorage.setItem('token', token);
-            res.json({success: true, token});
+    if(req.session.token) res.json({token: req.session.token, message: 'You have already login!!!'});
+    else {
+      const { errors, isValid } = validateLogin(req.body);
+      if(isValid) {
+        User.findOne({username: req.body.username}, (err, user) => {
+          if(user) {
+            if(bcrypt.compareSync(req.body.password, user.get('password'))) {
+              let token = jwt.sign({
+                id: user.get('_id'),
+                username: user.get('username')
+              }, 'somejsonwebtoken');
+              req.session.token = token;
+              res.json({success: true, token});
+            } else {
+              res.json({errors: 'Password is not match with username'})
+            }
           } else {
-            res.json({errors: 'Password is not match with username'})
+            res.status(404).json({success: false})
           }
-        } else {
-          res.status(404).json({success: false})
-        }
-      });
-    } else {
-      res.json({errors});
+        });
+      } else {
+        res.json({errors});
+      }
     }
   })
 
   app.get('/logout', authenticate, (req, res) => {
-    const token = req.headers.authorization;
-    if(token) {
-        localStorage.removeItem('token');
-        res.status(200).json({userLogout: req.decoded, token: req.headers.authorization, success: true});
-    } else res.json({errors: 'You dont have any token for this action!!'});
+    if(req.session.token) {
+        req.session.destroy();
+        res.status(200).json({userLogout: req.decoded.username, tokenLogout: req.headers.authorization});
+    } else res.json({errors: 'You need login before for this action!!!'});
   })
 }

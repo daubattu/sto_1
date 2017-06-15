@@ -52,7 +52,7 @@ router.get('/posts', authenticate, (req, res) => {
   Post.find({author: req.decoded.username}, (err, posts) => {
     if(err) res.json({err});
     else {
-      res.json({posts});
+      res.json(posts);
     }
   })
 })

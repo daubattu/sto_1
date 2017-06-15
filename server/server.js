@@ -1,7 +1,10 @@
 var express = require('express');
+var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
 var ejs = require('ejs');
 var engine = require('ejs-mate');
 var bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser');
 var mongoose = require('mongoose');
 
 import post from '../routes/post.js';
@@ -22,10 +25,18 @@ app.set("views", "views");
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
+
+app.use(session({
+  secret: 'secretKey',
+  resave: false,
+  saveUnitialized: false,
+  store: new MongoStore({mongooseConnection: mongoose.connection})
+}));
 
 require('../routes/user.js')(app);
 app.use('/api/users', apiUsers);
-app.use('/post', post);
+app.use('/posts', post);
 app.use('/api/me', profile);
 
 if(localStorage.getItem('token') !== '') {
