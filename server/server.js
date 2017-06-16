@@ -8,8 +8,8 @@ var cookieParser = require('cookie-parser');
 var mongoose = require('mongoose');
 
 import post from '../routes/post.js';
-import apiUsers from '../api/user.js';
-import profile from '../api/profile.js';
+import user from '../api/user.js';
+import me from '../api/me.js';
 
 import localStorage from 'localStorage';
 import setTokenAuthorizaton from './middleware/setTokenAuthorizaton';
@@ -35,9 +35,9 @@ app.use(session({
 }));
 
 require('../routes/user.js')(app);
-app.use('/api/users', apiUsers);
+app.use('/api/users', user);
 app.use('/posts', post);
-app.use('/api/me', profile);
+app.use('/api/me', me);
 
 if(localStorage.getItem('token') !== '') {
   setTokenAuthorizaton(localStorage.getItem('token'));

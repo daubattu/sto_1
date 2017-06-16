@@ -18,9 +18,7 @@ var postSchema = mongoose.Schema({
   }, {
     toJSON: {
       transform: function(profile, ret) {
-        delete ret._id;
         delete ret.__v;
-        delete ret.author.user_id;
       }
     }
 });

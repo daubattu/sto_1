@@ -74,12 +74,21 @@ router.get('/author/:identify', (req, res) => {
   });
 })
 
+router.get('/category/:identify', (req, res) => {
+  Post.find({category: req.params.identify}, (err, posts) => {
+    if(err) res.json(err);
+    else {
+      if(isEmpty(posts)) res.json({errors: 'Category not found!!!'});
+      else res.json(posts);
+    }
+  });
+})
+
 router.put('/:id', authenticate, (req, res) => {
   let messages = {};
   Post.findOne({_id: req.params.id}, (err, post) => {
     if(err) res.json({err: '_id not match any post'});
     else if(isEmpty(post)) messages.err = "No post for this author _id";
-    res
   }).then( post => {
     if(post.author.user_id === req.decoded._id) {
       console.log(post.author, req.decoded.username);

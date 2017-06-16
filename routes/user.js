@@ -6,7 +6,7 @@ import validateSignup from '../server/validate/validateSignup.js';
 import validateLogin from '../server/validate/validateLogin.js';
 import localStorage from 'localStorage';
 import authenticate from '../server/middleware/authenticate.js';
-import axios from 'axios';
+var useragent = require('useragent');
 
 module.exports = (app) => {
 
@@ -60,11 +60,13 @@ module.exports = (app) => {
       if(isValid) {
         User.findOne({username: req.body.username}, (err, user) => {
           if(user) {
+
             if(bcrypt.compareSync(req.body.password, user.get('password'))) {
               let token = jwt.sign({
                 _id: user.get('_id'),
                 username: user.get('username')
               }, 'somejsonwebtoken');
+
               req.session.token = token;
               res.json({success: true, token});
             } else {
