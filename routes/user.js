@@ -62,7 +62,7 @@ module.exports = (app) => {
           if(user) {
             if(bcrypt.compareSync(req.body.password, user.get('password'))) {
               let token = jwt.sign({
-                id: user.get('_id'),
+                _id: user.get('_id'),
                 username: user.get('username')
               }, 'somejsonwebtoken');
               req.session.token = token;

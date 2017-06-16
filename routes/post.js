@@ -10,7 +10,8 @@ router.post('/', authenticate, (req, res) => {
   let post = new Post();
 
   post.title = req.body.title;
-  post.author = req.decoded.username;
+  post.author.name = req.decoded.username;
+  post.author.user_id = req.decoded._id;
   post.category = req.body.category;
   post.content = req.body.content;
 
@@ -30,6 +31,7 @@ router.get('/', authenticate, (req, res) => {
   })
     .then( posts => {
       let page = req.query.page || 1;
+      console.log(typeof req.query.page);
       if(req.query.nav) {
         if(req.query.nav == 'next') {
           page++;
@@ -79,7 +81,7 @@ router.put('/:id', authenticate, (req, res) => {
     else if(isEmpty(post)) messages.err = "No post for this author _id";
     res
   }).then( post => {
-    if(post.author === req.decoded.username) {
+    if(post.author.user_id === req.decoded._id) {
       console.log(post.author, req.decoded.username);
       if(!isEmpty(req.body)) {
           function checkUpdate(post, data) {

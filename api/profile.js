@@ -9,18 +9,17 @@ var _ = require('lodash');
 let router = express.Router();
 
 router.get('/', authenticate, (req, res) => {
-  User.findOne({username: req.decoded.username}, (err, user) => {
-    if(err) res.json({err});
-    else {
+  console.log(req.decoded._id);
+  console.log(req.decoded);
+  User.findOne({_id: req.decoded._id}, (err, user) => {
       if(isEmpty(user)) res.json({errors: 'Profile not found!!!'});
-      else {
-        Profile.findOne({username: req.decoded.username}, (err, profile) => {
-          if(err) res.jon({err});
-          else {
-            if(_.isEqual(profile, {})) {
+      else if(user) {
+        Profile.findOne({user_id: req.decoded._id}, (err, profile) => {
+            if(isEmpty(profile)) {
 
               let profileUser = new Profile();
 
+              profileUser.user_id = user._id;
               profileUser.username = user.username;
               profileUser.birthday = user.birthday;
               profileUser.gender = user.gender;
@@ -32,11 +31,9 @@ router.get('/', authenticate, (req, res) => {
             } else {
               res.json(profile);
             }
-          }
         })
       }
-    }
-  })
+    });
 });
 
 router.put('/:id', authenticate, (req, res) => {
@@ -49,7 +46,7 @@ router.put('/:id', authenticate, (req, res) => {
 })
 
 router.get('/posts', authenticate, (req, res) => {
-  Post.find({author: req.decoded.username}, (err, posts) => {
+  Post.find({user_id: req.decoded._id}, (err, posts) => {
     if(err) res.json({err});
     else {
       res.json(posts);
