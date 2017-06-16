@@ -2,6 +2,9 @@
 
 <div class="container">
   <h1 class="text-center">Login</h1>
+  <% if(typeof message !== "undefined") { %>
+    <p><%= message %></p>
+  <% } %>
   <form action="/login" method="POST" class="col-lg-6 col-lg-offset-3">
     <div class="form-group">
       <label for="identify">Username</label>

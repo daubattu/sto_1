@@ -118,11 +118,21 @@ router.put('/:id', authenticate, (req, res) => {
   });
 });
 
-router.delete('/:id', (req, res) => {
-  Post.remove({ _id: req.params.id }, (err) => {
-    if (err) res.json({errors: 'Not found post with _id like params!!!'})
-    else res.json({success: true})
-  });
+router.delete('/:id', authenticate,  (req, res) => {
+  Post.findById(req.params.id, (err, post) => {
+    if(err) res.json(err);
+    else {
+      console.log(post.author.user_id, req.decoded._id);
+      if(post.author.user_id === req.decoded._id) {
+        Post.remove({ _id: req.params.id }, (err) => {
+          if (err) res.json({errors: 'Not found post with _id like params!!!'})
+          else res.json({success: true})
+        });
+      } else {
+        res.json({message: 'You dont have permission for this action!!!'});
+      }
+    }
+  })
 })
 
 router.get('/filter/category', (req, res) => {
@@ -142,21 +152,5 @@ router.get('/filter/category/:category', (req, res) => {
     }
  });
 })
-
-router.post('/add/comment', (req, res) => {
-  let comment = {};
-
-  comment.comment = req.body.comment;
-
-  let comments = [];
-
-  comments.push(comment);
-  console.log('comments in post /add/comment', comments);
-
-  Post.findOneAndUpdate({_id: req.body.postId}, {$push: {comments: comment}}, (err, comment) => {
-    if(err) res.json(err);
-    else res.json(comment);
-  })
-});
 
 export default router;

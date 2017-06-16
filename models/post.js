@@ -11,7 +11,9 @@ var postSchema = mongoose.Schema({
     content: {type: String, unique: true},
     comments: [{
       username: {type: String, default: 'Guest'},
+      user_id: {type: String},
       comment: {type: String, default: ''},
+      date: {type: Date}
     }],
     date: {type: Date, default: Date.now()},
     view: {type: Number, default: 0}

@@ -10,6 +10,7 @@ var mongoose = require('mongoose');
 import post from '../routes/post.js';
 import user from '../api/user.js';
 import me from '../api/me.js';
+import commentPost from '../routes/comment.js';
 
 import localStorage from 'localStorage';
 import setTokenAuthorizaton from './middleware/setTokenAuthorizaton';
@@ -38,6 +39,7 @@ require('../routes/user.js')(app);
 app.use('/api/users', user);
 app.use('/posts', post);
 app.use('/api/me', me);
+app.use('/posts/comment', commentPost);
 
 if(localStorage.getItem('token') !== '') {
   setTokenAuthorizaton(localStorage.getItem('token'));

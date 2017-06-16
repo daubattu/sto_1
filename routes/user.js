@@ -49,7 +49,7 @@ module.exports = (app) => {
   });
 
   app.get('/login', (req, res) => {
-    if(req.session.token) res.json({message: "You are logging!!! Do you want logout?"});
+    if(req.session.token) res.json({message: "You are logging!!! Do you want to logout?"});
     else res.render('user/login');
   });
 
