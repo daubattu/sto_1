@@ -4,7 +4,6 @@ var isEmpty = require('lodash/isEmpty');
 import bcrypt from 'bcrypt';
 import validateSignup from '../server/validate/validateSignup.js';
 import validateLogin from '../server/validate/validateLogin.js';
-import localStorage from 'localStorage';
 import authenticate from '../server/middleware/authenticate.js';
 var useragent = require('useragent');
 
@@ -68,9 +67,9 @@ module.exports = (app) => {
               }, 'somejsonwebtoken');
 
               req.session.token = token;
-              res.json({success: true, token});
+              res.status(200).json({success: true, token});
             } else {
-              res.json({errors: 'Password is not match with username'})
+              res.status(400).json({errors: 'Password is not match with username'})
             }
           } else {
             res.status(404).json({success: false})
@@ -86,6 +85,6 @@ module.exports = (app) => {
     if(req.session.token) {
         req.session.destroy();
         res.status(200).json({userLogout: req.decoded.username, tokenLogout: req.headers.authorization});
-    } else res.json({errors: 'You need login before for this action!!!'});
+    } else res.status(401).json({errors: 'You need login before for this action!!!'});
   })
 }

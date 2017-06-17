@@ -10,13 +10,14 @@ var postSchema = mongoose.Schema({
     category: {type: String},
     content: {type: String, unique: true},
     comments: [{
-      username: {type: String, default: 'Guest'},
+      username: {type: String},
       user_id: {type: String},
       comment: {type: String, default: ''},
       date: {type: Date}
     }],
     date: {type: Date, default: Date.now()},
-    view: {type: Number, default: 0}
+    view: {type: Number, default: 0},
+    tags: [String]
   }, {
     toJSON: {
       transform: function(profile, ret) {

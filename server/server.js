@@ -7,13 +7,10 @@ var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var mongoose = require('mongoose');
 
-import post from '../routes/post.js';
+import post from '../api/post.js';
 import user from '../api/user.js';
 import me from '../api/me.js';
 import commentPost from '../routes/comment.js';
-
-import localStorage from 'localStorage';
-import setTokenAuthorizaton from './middleware/setTokenAuthorizaton';
 
 var db = 'mongodb://admin:admin@ds121222.mlab.com:21222/sto';
 mongoose.connect(db);
@@ -37,13 +34,9 @@ app.use(session({
 
 require('../routes/user.js')(app);
 app.use('/api/users', user);
-app.use('/posts', post);
+app.use('/api/posts', post);
 app.use('/api/me', me);
 app.use('/posts/comment', commentPost);
-
-if(localStorage.getItem('token') !== '') {
-  setTokenAuthorizaton(localStorage.getItem('token'));
-}
 
 app.listen(3000, (req, res) => {
   console.log('Server is running on port 3000!!!');

@@ -6,7 +6,7 @@ export default(req, res, next) => {
   if(token) {
     jwt.verify(token, 'somejsonwebtoken', function(err, decoded) {
       if (err) {
-        res.json({ success: false, message: 'Token error!!!' });
+        res.status(400).json({ success: false, message: 'Token error!!!' });
       } else {
         req.decoded = decoded;
         req.headers.authorization = token;
@@ -14,6 +14,6 @@ export default(req, res, next) => {
       }
     });
   } else {
-    res.json({message: 'You need login for this action!!!'})
+    res.status(401).json({message: 'You need login for this action!!!'})
   }
 }

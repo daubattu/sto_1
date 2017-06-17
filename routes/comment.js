@@ -9,7 +9,7 @@ let router = express.Router();
 router.get('/:id', (req, res) => {
     Post.findById(req.params.id, (err, post) => {
       if(err) res.json(err);
-      else res.json(comments);
+      else res.json(post);
     })
 });
 
