@@ -38,6 +38,4 @@ app.use('/api/posts', post);
 app.use('/api/me', me);
 app.use('/posts/comment', commentPost);
 
-app.listen(3000, (req, res) => {
-  console.log('Server is running on port 3000!!!');
-});
+app.listen(3000);

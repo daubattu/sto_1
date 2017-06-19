@@ -3,6 +3,8 @@ import Post from '../models/Post';
 import authenticate from '../server/middleware/authenticate.js';
 import isEmpty from 'lodash/isEmpty';
 import _ from 'lodash';
+import axios from 'axios';
+import Location from '../models/location.js';
 
 let router = express.Router();
 
@@ -16,7 +18,6 @@ router.get('/', (req, res) => {
   })
     .then( posts => {
       let page = req.query.page || 1;
-      console.log(typeof req.query.page);
       if(req.query.nav) {
         if(req.query.nav == 'next') {
           page++;
@@ -32,29 +33,33 @@ router.get('/', (req, res) => {
       }
 
       Post.paginate('find', { page, limit: 5 }, (err, posts) => {
-        ! messages.err
-        ? res.json(posts.docs)
-        : res.json(messages)
+        !messages.err ? res.json(posts.docs) : res.json(messages)
       });
     });
 });
 
 router.post('/', authenticate, (req, res) => {
   let post = new Post();
+  let loc = [];
+  let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  console.log('ip', ip);
+  axios.get(`https://geoip-db.com/json/${req.ip}`).then(location => {
+    loc.push(location.data.longitude);
+    loc.push(location.data.latitude);
+  }).then(location => {
+    post.title = req.body.title;
+    post.author.name = req.decoded.username;
+    post.author.user_id = req.decoded._id;
+    post.category = req.body.category;
+    req.body.tags ? post.tags = req.body.tags.split(',') : post.tags = '';
+    post.content = req.body.content;
+    post.location = loc;
 
-  console.log(req.body.tags.split(','));
-
-  post.title = req.body.title;
-  post.author.name = req.decoded.username;
-  post.author.user_id = req.decoded._id;
-  post.category = req.body.category;
-  post.tags = req.body.tags.split(',');
-  post.content = req.body.content;
-
-  post.save((err, user) => {
-    if(err) res.status(404).json(err);
-    else res.status(200).json(post);
-  });
+    post.save((err, user) => {
+      if(err) res.status(404).json(err);
+      else res.status(200).json(post);
+    });
+  })
 });
 
 router.get('/:id', (req, res) => {
@@ -224,7 +229,7 @@ router.post('/:id/tags', (req, res) => {
         if(_.isEmpty(message)) {
           res.status(200).json(post.tags);
         } else {
-          res.status(201).json(message);
+          res.status(400).json(message);
         }
       }
     });
@@ -303,11 +308,8 @@ router.get('/author/:identify', (req, res) => {
 
 router.get('/category/:identify', (req, res) => {
   Post.find({category: req.params.identify}, (err, posts) => {
-    if(err) res.json(err);
-    else {
-      if(isEmpty(posts)) res.json({errors: 'Category not found!!!'});
-      else res.json(posts);
-    }
+    if(err) res.status(404).json(err);
+    else res.json(posts);
   });
 })
 

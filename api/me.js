@@ -25,12 +25,10 @@ router.put('/:id', authenticate, (req, res) => {
 })
 
 router.get('/posts', authenticate, (req, res) => {
-  Post.find({user_id: req.decoded._id}, (err, posts) => {
-    if(err) res.json({err});
-    else {
-      res.json(posts);
-    }
+  Post.find({'author.user_id': req.decoded._id}, (err, posts) => {
+    if(err) res.json(err);
+    else res.json(posts);
   })
-})
+});
 
 export default router;

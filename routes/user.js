@@ -6,8 +6,32 @@ import validateSignup from '../server/validate/validateSignup.js';
 import validateLogin from '../server/validate/validateLogin.js';
 import authenticate from '../server/middleware/authenticate.js';
 var useragent = require('useragent');
+import Post from '../models/Post';
+import axios from 'axios';
 
 module.exports = (app) => {
+
+  app.get('/locate', (req, res) => {
+
+    let limit = req.body.limit || 10;
+    let maxDistance = req.body.distance || 5000;
+    maxDistance /= 6371;
+
+    let coords = [];
+
+    coords[1] = req.query.latitude || req.body.latitude;
+    coords[0] = req.query.longitude || req.body.longitude;
+
+    Post.find({
+      location: {
+        $near: coords,
+        $maxDistance: maxDistance
+      }
+    }).limit(5).exec((err, posts) => {
+      if(err) return res.status(500).json(err);
+      else res.status(200).json(posts);
+    })
+  });
 
   app.get('/', (req, res) => {
     res.render('index');
@@ -87,4 +111,5 @@ module.exports = (app) => {
         res.status(200).json({userLogout: req.decoded.username, tokenLogout: req.headers.authorization});
     } else res.status(401).json({errors: 'You need login before for this action!!!'});
   })
+
 }

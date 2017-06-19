@@ -15,6 +15,7 @@ var postSchema = mongoose.Schema({
       comment: {type: String, default: ''},
       date: {type: Date}
     }],
+    location : [Number],
     date: {type: Date, default: Date.now()},
     view: {type: Number, default: 0},
     tags: [String]
@@ -26,6 +27,7 @@ var postSchema = mongoose.Schema({
     }
 });
 
+postSchema.index({'location': '2d'});
 postSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model('Post', postSchema);
