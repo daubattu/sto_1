@@ -1,5 +1,9 @@
 <% layout('layout') %>
 
 <div class="container">
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+      var socket = io("http://localhost:3000");
+  </script>
   <h1>Index</h1>
 </div>

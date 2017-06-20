@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 var mongoosePaginate = require('mongoose-paginate');
+import _ from 'lodash';
 
 var postSchema = mongoose.Schema({
     title: {type: String, required: true, unique: true},
@@ -8,7 +9,7 @@ var postSchema = mongoose.Schema({
       user_id: {type: String}
     },
     category: {type: String},
-    content: {type: String, unique: true},
+    content: {type: String, require: true, unique: true},
     comments: [{
       username: {type: String},
       user_id: {type: String},
@@ -23,11 +24,18 @@ var postSchema = mongoose.Schema({
     toJSON: {
       transform: function(profile, ret) {
         delete ret.__v;
+        if(!_.isEmpty(ret.location)) {
+          ret.location = {
+            longitude: ret.location[0],
+            latitude: ret.location[1]
+          }
+        } else {
+          delete ret.location;
+        }
       }
     }
 });
 
-postSchema.index({'location': '2d'});
 postSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model('Post', postSchema);

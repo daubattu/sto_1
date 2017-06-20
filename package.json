@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --watch server --exec babel-node server/server.js",
+    "start": "nodemon --watch server --watch routes --watch models --watch api --watch views --exec babel-node server/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -27,6 +27,7 @@
     "mongoose": "^4.10.5",
     "mongoose-paginate": "^5.0.3",
     "node-where": "^1.1.0",
+    "socket.io": "^2.0.3",
     "useragent": "^2.1.13"
   }
 }

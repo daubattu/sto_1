@@ -4,7 +4,6 @@ import authenticate from '../server/middleware/authenticate.js';
 import isEmpty from 'lodash/isEmpty';
 import _ from 'lodash';
 import axios from 'axios';
-import Location from '../models/location.js';
 
 let router = express.Router();
 
@@ -12,10 +11,61 @@ router.get('/', (req, res) => {
   let count;
   let messages = {};
 
-  Post.find().exec({}, (err, posts) => {
-    if(posts) count = posts.length;
-    else if(isEmpty(posts)) res.status(404).json({err: 'No post in db!!!'});
-  })
+  let posts = [];
+
+  if(!_.isEmpty(req.query.latitude) && !_.isEmpty(req.query.longitude)) {
+    console.log('111111111111111111111111111111');
+    let coords = []
+
+    coords[1] = req.query.latitude;
+    coords[0] = req.query.longitude;
+
+    let maxDistance = req.query.distance || 5000;
+    maxDistance /= 6371;
+
+    var pageOptions = {
+      page: req.query.page || 0,
+      limit: req.query.limit || 10
+    }
+
+    if(req.query.nav) {
+      if(req.query.nav == 'next') {
+        pageOptions.page++;
+      } else if(req.query.nav == 'prev') pageOptions.page--;
+    }
+    if(req.query.goto) {
+      pageOptions.page = req.query.goto;
+    }
+    if(pageOptions.page < 0) {
+      messages.err = `Err!!! Page dont much fewer than 1!!!`;
+    } else if(pageOptions.page > (count/5 + 1)) {
+      messages.err = `Err!!! Page dont much more than ${Math.floor(count/5 + 1)}!!!`;
+    }
+
+    Post.find({
+      location: {
+        $near: coords,
+        $maxDistance: maxDistance
+      }
+    }).skip(pageOptions.page*pageOptions.limit)
+      .limit(pageOptions.limit)
+      .exec(function (err, posts) {
+          if(err) res.status(500).json(err);
+          else {
+            posts = posts.filter(post => {
+              if(!_.isEmpty(post.location)) {
+                return post;
+              }
+            })
+            res.status(200).json(posts);
+          }
+      })
+  } else {
+    console.log("22222222222222222222");
+    Post.find().exec({}, (err, posts) => {
+      if(posts) count = posts.length;
+      else if(isEmpty(posts)) res.status(404).json({err: 'No post in db!!!'});
+    })
     .then( posts => {
       let page = req.query.page || 1;
       if(req.query.nav) {
@@ -33,33 +83,38 @@ router.get('/', (req, res) => {
       }
 
       Post.paginate('find', { page, limit: 5 }, (err, posts) => {
-        !messages.err ? res.json(posts.docs) : res.json(messages)
+        if(!messages.err) {
+          res.status(200).json(posts.docs);
+        } else res.status(400).json(messages);
       });
     });
+  }
 });
 
 router.post('/', authenticate, (req, res) => {
   let post = new Post();
-  let loc = [];
+
   let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   console.log('ip', ip);
-  axios.get(`https://geoip-db.com/json/${req.ip}`).then(location => {
-    loc.push(location.data.longitude);
-    loc.push(location.data.latitude);
-  }).then(location => {
-    post.title = req.body.title;
-    post.author.name = req.decoded.username;
-    post.author.user_id = req.decoded._id;
-    post.category = req.body.category;
-    req.body.tags ? post.tags = req.body.tags.split(',') : post.tags = '';
-    post.content = req.body.content;
-    post.location = loc;
+  console.log(req.body.longitude, req.body.latitude);
+  if(!_.isEmpty(req.body.longitude) && !_.isEmpty(req.body.latitude)) {
+    post.location.push(req.body.longitude);
+    post.location.push(req.body.latitude);
+  }
 
-    post.save((err, user) => {
-      if(err) res.status(404).json(err);
-      else res.status(200).json(post);
-    });
-  })
+  post.title = req.body.title;
+  post.author.name = req.decoded.username;
+  post.author.user_id = req.decoded._id;
+  post.category = req.body.category;
+  if(req.body.tags) {
+    post.tags = req.body.tags.split(',')
+  }
+  post.content = req.body.content;
+
+  post.save((err, user) => {
+    if(err) res.status(404).json(err);
+    else res.status(200).json(post);
+  });
 });
 
 router.get('/:id', (req, res) => {

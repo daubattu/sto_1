@@ -1,37 +1,15 @@
 import jwt from 'jsonwebtoken';
-var User = require('../models/user.js');
-var isEmpty = require('lodash/isEmpty');
+import User from '../models/user.js';
 import bcrypt from 'bcrypt';
 import validateSignup from '../server/validate/validateSignup.js';
 import validateLogin from '../server/validate/validateLogin.js';
 import authenticate from '../server/middleware/authenticate.js';
-var useragent = require('useragent');
+import useragent from 'useragent';
 import Post from '../models/Post';
 import axios from 'axios';
+import _ from 'lodash';
 
 module.exports = (app) => {
-
-  app.get('/locate', (req, res) => {
-
-    let limit = req.body.limit || 10;
-    let maxDistance = req.body.distance || 5000;
-    maxDistance /= 6371;
-
-    let coords = [];
-
-    coords[1] = req.query.latitude || req.body.latitude;
-    coords[0] = req.query.longitude || req.body.longitude;
-
-    Post.find({
-      location: {
-        $near: coords,
-        $maxDistance: maxDistance
-      }
-    }).limit(5).exec((err, posts) => {
-      if(err) return res.status(500).json(err);
-      else res.status(200).json(posts);
-    })
-  });
 
   app.get('/', (req, res) => {
     res.render('index');
@@ -77,13 +55,13 @@ module.exports = (app) => {
   });
 
   app.post('/login', (req, res) => {
+    console.log(req.session.token);
     if(req.session.token) res.json({token: req.session.token, message: 'You have already login!!!'});
     else {
       const { errors, isValid } = validateLogin(req.body);
       if(isValid) {
         User.findOne({username: req.body.username}, (err, user) => {
           if(user) {
-
             if(bcrypt.compareSync(req.body.password, user.get('password'))) {
               let token = jwt.sign({
                 _id: user.get('_id'),
@@ -91,16 +69,16 @@ module.exports = (app) => {
               }, 'somejsonwebtoken');
 
               req.session.token = token;
-              res.status(200).json({success: true, token});
+              res.status(200).json({token});
             } else {
-              res.status(400).json({errors: 'Password is not match with username'})
+              res.json({errors.password: 'Password is not match with username'})
             }
           } else {
-            res.status(404).json({success: false})
+            res.json({errors.username: 'Not found'})
           }
         });
       } else {
-        res.json({errors});
+        res.json({errors: 'Not found'});
       }
     }
   })

@@ -3,9 +3,7 @@ import User from '../models/user.js';
 import authenticate from '../server/middleware/authenticate.js';
 import isEmpty from 'lodash/isEmpty';
 import Post from '../models/Post';
-import geolocator from 'geolocator';
 import axios from 'axios';
-var iplocation = require('iplocation')
 
 let router = express.Router();
 
