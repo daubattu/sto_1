@@ -17,6 +17,13 @@ router.get('/', authenticate, (req, res) => {
   })
 })
 
+router.get('/:id', (req, res) => {
+  User.findById(req.params.id, (err, user) => {
+    if(err) res.status(404).json({errors: err});
+    else res.status(200).json(user);
+  })
+})
+
 router.get('/:id/posts', (req, res) => {
   User.findById(req.params.id, (err, user) => {
     if(err) res.status(404).json(err);

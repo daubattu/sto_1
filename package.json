@@ -24,6 +24,7 @@
     "express-session": "^1.15.3",
     "jsonwebtoken": "^7.4.1",
     "lodash": "^4.17.4",
+    "moment": "^2.18.1",
     "mongoose": "^4.10.5",
     "mongoose-paginate": "^5.0.3",
     "node-where": "^1.1.0",

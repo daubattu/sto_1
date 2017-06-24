@@ -10,6 +10,7 @@ var postSchema = mongoose.Schema({
     },
     category: {type: String},
     content: {type: String, require: true, unique: true},
+    thumbnail: {type: String, default: ''},
     comments: [{
       username: {type: String},
       user_id: {type: String},
@@ -17,7 +18,7 @@ var postSchema = mongoose.Schema({
       date: {type: Date}
     }],
     location : [Number],
-    date: {type: Date, default: Date.now()},
+    date: {type: Date},
     view: {type: Number, default: 0},
     tags: [String]
   }, {
@@ -36,6 +37,7 @@ var postSchema = mongoose.Schema({
     }
 });
 
+postSchema.index({ content: "hashed"});
 postSchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model('Post', postSchema);

@@ -25,7 +25,7 @@ router.get('/', (req, res) => {
 
     var pageOptions = {
       page: req.query.page || 0,
-      limit: req.query.limit || 10
+      limit: req.query.limit || 5
     }
 
     if(req.query.nav) {
@@ -48,6 +48,7 @@ router.get('/', (req, res) => {
         $maxDistance: maxDistance
       }
     }).skip(pageOptions.page*pageOptions.limit)
+      .sort({date: -1})
       .limit(pageOptions.limit)
       .exec(function (err, posts) {
           if(err) res.status(500).json(err);
@@ -67,35 +68,93 @@ router.get('/', (req, res) => {
       else if(isEmpty(posts)) res.status(404).json({err: 'No post in db!!!'});
     })
     .then( posts => {
-      let page = req.query.page || 1;
+
+      var pageOptions = {
+        page: req.query.page || 0,
+        limit: req.query.limit || 5
+      }
+
       if(req.query.nav) {
         if(req.query.nav == 'next') {
-          page++;
-        } else if(req.query.nav == 'prev') page--;
+          pageOptions.page++;
+        } else if(req.query.nav == 'prev') pageOptions.page--;
       }
       if(req.query.goto) {
-        page = req.query.goto;
+        pageOptions.page = req.query.goto;
       }
-      if(page <= 0) {
+      if(pageOptions.page < 0) {
         messages.err = `Err!!! Page dont much fewer than 1!!!`;
-      } else if(page > (count/5 + 1)) {
+      } else if(pageOptions.page > (count/5 + 1)) {
         messages.err = `Err!!! Page dont much more than ${Math.floor(count/5 + 1)}!!!`;
       }
 
-      Post.paginate('find', { page, limit: 5 }, (err, posts) => {
-        if(!messages.err) {
-          res.status(200).json(posts.docs);
-        } else res.status(400).json(messages);
+      let maxPage;
+
+      Post.find({}, (err, posts) => {
+        if(!err) maxPage = posts.length;
+      }).then(posts => {
+        Post.find({})
+        .skip(pageOptions.page*pageOptions.limit)
+        .sort({date: -1})
+        .limit(pageOptions.limit)
+        .exec(function (err, posts) {
+          if(err) res.status(500).json(err);
+          else {
+            res.status(200).json({posts, maxPage});
+          }
+        })
       });
     });
   }
 });
 
+router.get('/controversial', (req, res) => {
+  Post.aggregate([
+  {
+    $project : { commentsCount: {$size: { "$ifNull": [ "$comments", [] ] } },
+     title: "$title", date: "$date", author: "$author", category: "$category",
+     content: "$content", thumbnail: "$thumbnail", comments: "$comments", location: "$location", views: "$views", tags: "$tags"
+    }
+  },
+  {$sort: {"commentsCount": -1}}
+  ]).exec((err, posts) => {
+    if(!err) {
+      posts = posts.filter(post => {
+        let time = new Date() - new Date(post.date);
+        if(post.commentsCount !== 0 && time < 86400000) return post;
+      })
+      res.json({posts, maxPage: posts.length});
+    }
+  })
+});
+
+router.get('/top', (req, res) => {
+  Post.find({views: {$gt: 0}}).sort({views: -1}).limit(5).exec((err, posts) => {
+    if(!err) {
+      posts = posts.filter(post => {
+        let time = new Date() - new Date(post.date);
+        if(post.commentsCount !== 0 && time < 86400000) return post;
+      })
+      res.json({posts, maxPage: posts.length});
+    }
+  })
+});
+
+router.get('/topMonth', (req, res) => {
+  Post.find({views: {$gt: 0}}).sort({views: -1}).limit(5).exec((err, posts) => {
+    if(!err) {
+      posts = posts.filter(post => {
+        let time = new Date() - new Date(post.date);
+        if(post.commentsCount !== 0 && time < 86400000) return post;
+      })
+      res.json({posts, maxPage: posts.length});
+    }
+  })
+});
+
 router.post('/', authenticate, (req, res) => {
   let post = new Post();
 
-  let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  console.log('ip', ip);
   console.log(req.body.longitude, req.body.latitude);
   if(!_.isEmpty(req.body.longitude) && !_.isEmpty(req.body.latitude)) {
     post.location.push(req.body.longitude);
@@ -104,8 +163,12 @@ router.post('/', authenticate, (req, res) => {
 
   post.title = req.body.title;
   post.author.name = req.decoded.username;
+  post.date = req.body.date;
   post.author.user_id = req.decoded._id;
   post.category = req.body.category;
+  if(req.body.thumbnail) {
+    post.thumbnail = req.body.thumbnail;
+  }
   if(req.body.tags) {
     post.tags = req.body.tags.split(',')
   }
@@ -124,7 +187,7 @@ router.get('/:id', (req, res) => {
       if(isEmpty(posts)) res.status(404).json({errors: '_id not found!!!'});
       else res.status(200).json(posts);
     }
-  });
+  })
 })
 
 router.put('/:id', authenticate, (req, res) => {
@@ -194,10 +257,30 @@ router.post('/:id/comments', authenticate, (req, res) => {
   comment.date = Date.now();
   comment.user_id = req.decoded._id;
 
-  Post.findOneAndUpdate({_id: req.params.id}, {$push: {comments: comment}}, (err, comment) => {
-    if(err) res.json(err);
-    else res.json(comment);
-  });
+  console.log(req.decoded._id);
+
+  Post.findById(req.params.id, (err, post) => {
+    if(err) res.status(404).json(err);
+    else {
+      let isExist = false;
+      for(let cmt of post.comments) {
+        if(cmt.user_id === req.decoded._id && cmt.comment === comment.comment) {
+          isExist = true;
+        }
+      }
+      if(isExist) {
+        let errors = {};
+        errors.deprecated = 'You already post this comment. Try with another comment!!!';
+        res.status(400).json({errors});
+      }
+      else {
+        Post.findOneAndUpdate({_id: req.params.id}, {$push: {comments: comment}}, (err, comment) => {
+          if(err) res.status(400).json(err);
+          else res.status(200).json(comment);
+        });
+      }
+    }
+  })
 
 });
 

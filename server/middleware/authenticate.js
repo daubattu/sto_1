@@ -2,7 +2,12 @@ import jwt from 'jsonwebtoken';
 import User from '../../models/user.js';
 
 export default(req, res, next) => {
-  const token = req.session.token;
+  const authorizationHeader = req.headers['authorization'];
+  let token;
+  if(authorizationHeader) {
+    token = authorizationHeader.split(' ')[1];
+  }
+
   if(token) {
     jwt.verify(token, 'somejsonwebtoken', function(err, decoded) {
       if (err) {
@@ -14,6 +19,8 @@ export default(req, res, next) => {
       }
     });
   } else {
-    res.status(401).json({message: 'You need login for this action!!!'})
+    let errors = {};
+    errors.login = 'You need login for this action';
+    res.status(400).json({errors});
   }
 }

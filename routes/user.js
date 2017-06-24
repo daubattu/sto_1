@@ -28,7 +28,7 @@ module.exports = (app) => {
     if(isValid) {
       User.findOne({username: req.body.username}, (err, user) => {
         if(user) {
-          errors.form = 'Deprecated username!!!';
+          errors.username = 'Deprecated username!!!';
           res.json({errors});
         } else {
           let user = new User();
@@ -55,32 +55,24 @@ module.exports = (app) => {
   });
 
   app.post('/login', (req, res) => {
-    console.log(req.session.token);
-    if(req.session.token) res.json({token: req.session.token, message: 'You have already login!!!'});
-    else {
-      const { errors, isValid } = validateLogin(req.body);
-      if(isValid) {
-        User.findOne({username: req.body.username}, (err, user) => {
-          if(user) {
-            if(bcrypt.compareSync(req.body.password, user.get('password'))) {
-              let token = jwt.sign({
-                _id: user.get('_id'),
-                username: user.get('username')
-              }, 'somejsonwebtoken');
-
-              req.session.token = token;
-              res.status(200).json({token});
-            } else {
-              res.json({errors.password: 'Password is not match with username'})
-            }
+    let errors = {};
+      User.findOne({username: req.body.username}, (err, user) => {
+        if(user) {
+          if(bcrypt.compareSync(req.body.password, user.get('password'))) {
+            let token = jwt.sign({
+              _id: user.get('_id'),
+              username: user.get('username')
+            }, 'somejsonwebtoken');
+            res.status(200).json({user, token});
           } else {
-            res.json({errors.username: 'Not found'})
+            errors.password = 'Password is not match with username';
+            res.status(500).json({errors})
           }
-        });
-      } else {
-        res.json({errors: 'Not found'});
-      }
-    }
+        } else {
+          errors.username = 'Not found username'
+          res.status(400).json({errors});
+        }
+      });
   })
 
   app.get('/logout', authenticate, (req, res) => {
