@@ -3,7 +3,7 @@ import User from '../models/user.js';
 import authenticate from '../server/middleware/authenticate.js';
 import isEmpty from 'lodash/isEmpty';
 import Post from '../models/Post';
-import axios from 'axios';
+import _ from 'lodash';
 
 let router = express.Router();
 
@@ -14,6 +14,15 @@ router.get('/', authenticate, (req, res) => {
       if(isEmpty(users)) res.json({messages: 'No user in db'});
       else res.json(users);
     }
+  })
+})
+
+router.put('/:id', authenticate, (req, res) => {
+  User.findOneAndUpdate({_id: req.params.id}, req.body, (err, user) => {
+    if(err) res.status(400).json(err);
+    else if(_.isEqual(user, req.body)) {
+      res.status(500).json({message: 'You dont change your information!!!'});
+    } else res.status(200).json({messages: 'Update success'});
   })
 })
 
@@ -30,7 +39,7 @@ router.get('/:id/posts', (req, res) => {
     else {
       Post.find({'author.user_id': req.params.id}, (err, posts) => {
         if(err) res.status(404).json(err);
-        else res.json(posts);
+        else res.status(200).json(posts);
       })
     }
   })
